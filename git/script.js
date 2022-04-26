@@ -19,7 +19,6 @@ function createDate(dateValueMs) {
     return `${currentYear}-${currentMonth}-${currentDay}`
 }
 let maxDate = createDate()
-console.log(maxDate)
 document.querySelector('#count').addEventListener('click', () => {
     let dateFrom = document.querySelector('#dateFrom').value
     let dateTo = document.querySelector('#dateTo').value
@@ -37,10 +36,26 @@ document.querySelector('#count').addEventListener('click', () => {
         return arrayOfDates
     }
     getDates(dateFrom, dateTo)
-    console.log(getDates(dateFrom, dateTo))
     let getFetchList = getDates(dateFrom, dateTo).map(date => fetch(`https://www.nbrb.by/api/exrates/rates/usd?parammode=2&ondate=${date}`).then(response => response.json()).then(response => response.Cur_OfficialRate))
-    Promise.all(getFetchList).then(values => {
-        document.querySelector('#out').innerHTML = `min USD rate: ${Math.min(...values)}</br> max USD rate: ${Math.max(...values)}`
+    Promise.all(getFetchList).then(rates => {
+        let datesWithRates = {}
+        rates.forEach((el, ind) => {
+            datesWithRates[getDates(dateFrom, dateTo)[ind]] = el
+        })
+        let minRate = datesWithRates[getDates(dateFrom, dateTo)[0]]
+        let maxRate = datesWithRates[getDates(dateFrom, dateTo)[0]]
+        let minRateDate = getDates(dateFrom, dateTo)[0]
+        let maxRateDate = getDates(dateFrom, dateTo)[0]
+        for (key in datesWithRates) {
+            if (datesWithRates[key] > maxRate) {
+                maxRate = datesWithRates[key]
+                maxRateDate = key
+            } else if (datesWithRates[key] < minRate) {
+                minRate = datesWithRates[key]
+                minRateDate = key
+            }
+        }
+        document.querySelector('#out').innerHTML = `min USD rate: ${maxRate}. It was ${minRateDate.replaceAll('-', '.')} </br> max USD rate: ${maxRate}. It was ${maxRateDate.replaceAll('-', '.')}`
     })
 })
 
